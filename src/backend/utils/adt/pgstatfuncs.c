@@ -650,16 +650,16 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		values[0] = ObjectIdGetDatum(beentry->st_databaseid);
 		values[1] = Int32GetDatum(beentry->st_procpid);
 		values[2] = ObjectIdGetDatum(beentry->st_userid);
-		if (beentry->st_appname)
-			values[3] = CStringGetTextDatum(beentry->st_appname);
-		else
-			nulls[3] = true;
 
 		/* Values only available to same user or superuser */
 		if (superuser() || beentry->st_userid == GetUserId())
 		{
 			SockAddr	zero_clientaddr;
 
+			if (beentry->st_appname)
+				values[3] = CStringGetTextDatum(beentry->st_appname);
+			else
+				nulls[3] = true;
 			switch (beentry->st_state)
 			{
 				case STATE_IDLE:
@@ -778,6 +778,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		else
 		{
 			/* No permissions to view data about this session */
+			values[3] = CStringGetTextDatum("<insufficient privilege>");
 			values[5] = CStringGetTextDatum("<insufficient privilege>");
 			nulls[4] = true;
 			nulls[6] = true;
